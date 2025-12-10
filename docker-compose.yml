@@ -90,7 +90,7 @@ services:
     expose:
       - 8080
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:8080:8080"
+      - "${EXTERNAL_IP:-127.0.0.1}:8080:8080"
     healthcheck:
       test: curl -f http://localhost:8080/api/ping
       interval: 10s
@@ -292,7 +292,7 @@ services:
     expose:
       - 27017
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:27017:27017"
+      - "${EXTERNAL_IP:-127.0.0.1}:27017:27017"
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
@@ -312,7 +312,7 @@ services:
     expose:
       - 8081
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:8081:8081"
+      - "${EXTERNAL_IP:-127.0.0.1}:8081:8081"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mongo-express.entrypoints=web,websecure"
@@ -338,8 +338,8 @@ services:
       - 9000
       - 9090
     ports:
-      - 0.0.0.0:9000:9000
-      - "${TAILSCALE_IP:-127.0.0.1}:9090:9090"
+      - "${EXTERNAL_IP:-127.0.0.1}:9000:9000"
+      - "${EXTERNAL_IP:-127.0.0.1}:9090:9090"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.minio.entrypoints=web,websecure"
@@ -367,7 +367,7 @@ services:
     expose:
       - 6379
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:6379:6379"
+      - "${EXTERNAL_IP:-127.0.0.1}:6379:6379"
     healthcheck:
       test: redis-cli ping | grep PONG
       interval: 10s
@@ -377,14 +377,16 @@ services:
       - redis-data:/data
 
   searxng:
-    image: searxng/searxng:2023.12.11-8a4104b99
+    build:
+      context: ./searxng
+      dockerfile: Dockerfile
     restart: unless-stopped
     networks:
       - sso-monitor-network
     expose:
       - 8080
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:8082:8080"
+      - "${EXTERNAL_IP:-127.0.0.1}:8082:8080"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.searxng.entrypoints=web,websecure"
@@ -416,7 +418,7 @@ services:
     expose:
       - 8888
     ports:
-      - "${TAILSCALE_IP:-127.0.0.1}:8888:8888"
+      - "${EXTERNAL_IP:-127.0.0.1}:8888:8888"
     deploy:
       resources:
         limits:

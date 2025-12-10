@@ -221,6 +221,7 @@ def dispatch_landscape_analysis_task_request():
     db = current_app.config["db"]
     rabbit = current_app.config["rabbit"]
     reqdata = request.get_json()
+    r_tasks = []
 
     scan_type = reqdata["scan_config"]["scan_type"]
 
@@ -241,6 +242,7 @@ def dispatch_landscape_analysis_task_request():
     if scan_type == "single":
         treq = deepcopy(reqdata)
         tid = str(uuid4())
+        r_tasks.append(tid)
         treq["task_config"]["task_id"] = tid
         treq["task_config"]["task_timestamp_request_sent"] = time()
         treq["domain"] = treq["scan_config"]["domain"]
@@ -254,6 +256,7 @@ def dispatch_landscape_analysis_task_request():
         for gt in db["top_sites_lists"].find({"id": list_id, "rank": {"$gte": offset, "$lt": offset + limit}}):
             treq = deepcopy(reqdata)
             tid = str(uuid4())
+            r_tasks.append(tid)
             treq["task_config"]["task_id"] = tid
             treq["task_config"]["task_timestamp_request_sent"] = time()
             treq["domain"] = gt["domain"]
@@ -287,6 +290,7 @@ def dispatch_landscape_analysis_task_request():
         for gt in db["ground_truth"].aggregate(pipeline):
             treq = deepcopy(reqdata)
             tid = str(uuid4())
+            r_tasks.append(tid)
             treq["task_config"]["task_id"] = tid
             treq["task_config"]["task_timestamp_request_sent"] = time()
             treq["domain"] = gt["_id"]
@@ -313,6 +317,7 @@ def dispatch_landscape_analysis_task_request():
         for tres in db["landscape_analysis_tres"].find(q):
             treq = deepcopy(reqdata)
             tid = str(uuid4())
+            r_tasks.append(tid)
             treq["task_config"]["task_id"] = tid
             treq["task_config"]["task_timestamp_request_sent"] = time()
             treq["domain"] = tres["domain"]
@@ -322,7 +327,7 @@ def dispatch_landscape_analysis_task_request():
             ]
             rabbit.send_treq("landscape_analysis_treq", "/api/tasks/landscape_analysis/tres", tid, treq)
 
-    return {"success": True, "error": None, "data": None}
+    return {"success": True, "error": None, "data": r_tasks}
 
 
 @bp_tasks.put("/login_trace_analysis/treq")
