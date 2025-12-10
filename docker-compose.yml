@@ -1,7 +1,6 @@
 version: "3"
 
 services:
-
   traefik:
     image: traefik:v2.10
     restart: unless-stopped
@@ -91,7 +90,7 @@ services:
     expose:
       - 8080
     ports:
-      - 127.0.0.1:8080:8080
+      - "${TAILSCALE_IP:-127.0.0.1}:8080:8080"
     healthcheck:
       test: curl -f http://localhost:8080/api/ping
       interval: 10s
@@ -131,7 +130,85 @@ services:
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
 
-  worker:
+  worker_login:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    command: xvfb-run -a python app.py
+    restart: unless-stopped
+    init: true
+    ipc: host
+    security_opt:
+      - seccomp=./worker/seccomp_profile.json
+    depends_on:
+      searxng:
+        condition: service_healthy
+    networks:
+      - sso-monitor-network
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    volumes:
+      - type: tmpfs
+        target: /tmpfs
+    deploy:
+      mode: replicated
+      replicas: 2
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TMP_PATH=${TMP_PATH:-/tmpfs}
+      # auth
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-changeme}
+      # rabbitmq
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_TLS=${RABBITMQ_TLS:-0}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-login_trace_analysis_treq}
+      # urls
+      - BRAIN_URL=${BRAIN_URL:-http://brain:8080}
+      - SEARXNG_URL=${SEARXNG_URL:-http://searxng:8080}
+
+  worker_wildcard:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    command: xvfb-run -a python app.py
+    restart: unless-stopped
+    init: true
+    ipc: host
+    security_opt:
+      - seccomp=./worker/seccomp_profile.json
+    depends_on:
+      searxng:
+        condition: service_healthy
+    networks:
+      - sso-monitor-network
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    volumes:
+      - type: tmpfs
+        target: /tmpfs
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TMP_PATH=${TMP_PATH:-/tmpfs}
+      # auth
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-changeme}
+      # rabbitmq
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_TLS=${RABBITMQ_TLS:-0}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-wildcard_receiver_analysis_treq}
+      # urls
+      - BRAIN_URL=${BRAIN_URL:-http://brain:8080}
+      - SEARXNG_URL=${SEARXNG_URL:-http://searxng:8080}
+
+  worker_landscape:
     build:
       context: ./worker
       dockerfile: Dockerfile
@@ -215,7 +292,7 @@ services:
     expose:
       - 27017
     ports:
-      - 127.0.0.1:27017:27017
+      - "${TAILSCALE_IP:-127.0.0.1}:27017:27017"
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
       interval: 10s
@@ -235,7 +312,7 @@ services:
     expose:
       - 8081
     ports:
-      - 127.0.0.1:8081:8081
+      - "${TAILSCALE_IP:-127.0.0.1}:8081:8081"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mongo-express.entrypoints=web,websecure"
@@ -262,7 +339,7 @@ services:
       - 9090
     ports:
       - 0.0.0.0:9000:9000
-      - 127.0.0.1:9090:9090
+      - "${TAILSCALE_IP:-127.0.0.1}:9090:9090"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.minio.entrypoints=web,websecure"
@@ -290,7 +367,7 @@ services:
     expose:
       - 6379
     ports:
-      - 127.0.0.1:6379:6379
+      - "${TAILSCALE_IP:-127.0.0.1}:6379:6379"
     healthcheck:
       test: redis-cli ping | grep PONG
       interval: 10s
@@ -307,7 +384,7 @@ services:
     expose:
       - 8080
     ports:
-      - 127.0.0.1:8082:8080
+      - "${TAILSCALE_IP:-127.0.0.1}:8082:8080"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.searxng.entrypoints=web,websecure"
@@ -339,7 +416,7 @@ services:
     expose:
       - 8888
     ports:
-      - 127.0.0.1:8888:8888
+      - "${TAILSCALE_IP:-127.0.0.1}:8888:8888"
     deploy:
       resources:
         limits:
