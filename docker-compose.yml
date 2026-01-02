@@ -132,7 +132,7 @@ services:
     build:
       context: ./worker
       dockerfile: Dockerfile
-    command: xvfb-run -a python app.py
+    entrypoint: /usr/local/bin/entrypoint.sh
     restart: unless-stopped
     init: true
     ipc: host
@@ -149,12 +149,16 @@ services:
     volumes:
       - type: tmpfs
         target: /tmpfs
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "5902-5903:5900"
     deploy:
       mode: replicated
       replicas: 2
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TMP_PATH=${TMP_PATH:-/tmpfs}
+
       # auth
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASS=${ADMIN_PASS:-changeme}
@@ -171,7 +175,7 @@ services:
     build:
       context: ./worker
       dockerfile: Dockerfile
-    command: xvfb-run -a python app.py
+    entrypoint: /usr/local/bin/entrypoint.sh
     restart: unless-stopped
     init: true
     ipc: host
@@ -188,12 +192,16 @@ services:
     volumes:
       - type: tmpfs
         target: /tmpfs
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "5904:5900"
     deploy:
       mode: replicated
       replicas: 1
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TMP_PATH=${TMP_PATH:-/tmpfs}
+
       # auth
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASS=${ADMIN_PASS:-changeme}
@@ -210,7 +218,7 @@ services:
     build:
       context: ./worker
       dockerfile: Dockerfile
-    command: xvfb-run -a python app.py
+    entrypoint: /usr/local/bin/entrypoint.sh
     restart: unless-stopped
     init: true
     ipc: host
@@ -227,12 +235,16 @@ services:
     volumes:
       - type: tmpfs
         target: /tmpfs
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "5900-5901:5900"
     deploy:
       mode: replicated
       replicas: 2
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TMP_PATH=${TMP_PATH:-/tmpfs}
+
       # auth
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASS=${ADMIN_PASS:-changeme}
