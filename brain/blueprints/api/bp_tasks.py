@@ -336,6 +336,7 @@ def dispatch_login_trace_analysis_task_request():
     db = current_app.config["db"]
     rabbit = current_app.config["rabbit"]
     reqdata = request.get_json()
+    res = []
 
     scan_type = reqdata["scan_config"]["scan_type"]
     idp_credentials = reqdata["login_trace_analysis_config"]["idp_credentials"]
@@ -383,9 +384,10 @@ def dispatch_login_trace_analysis_task_request():
                     "idp_cookie_store": idp_credential["idp_cookie_store"]
                 }
             }
+            res.append(tid)
             rabbit.send_treq("login_trace_analysis_treq", "/api/tasks/login_trace_analysis/tres", tid, treq)
 
-    return {"success": True, "error": None, "data": None}
+    return {"success": True, "error": None, "data": res}
 
 
 @bp_tasks.put("/wildcard_receiver_analysis/treq")
