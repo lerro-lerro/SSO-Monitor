@@ -246,6 +246,12 @@ def dispatch_landscape_analysis_task_request():
         treq["task_config"]["task_id"] = tid
         treq["task_config"]["task_timestamp_request_sent"] = time()
         treq["domain"] = treq["scan_config"]["domain"]
+        
+        ##############################################################################################
+        # FILTER: Only Google IdP
+        treq["landscape_analysis_config"]["idp_config"]["idp_scope"] = ["GOOGLE"]
+        ##############################################################################################
+        
         rabbit.send_treq("landscape_analysis_treq", "/api/tasks/landscape_analysis/tres", tid, treq)
 
     # scan type: range
@@ -322,6 +328,12 @@ def dispatch_landscape_analysis_task_request():
             treq["task_config"]["task_timestamp_request_sent"] = time()
             treq["domain"] = tres["domain"]
             treq["landscape_analysis_config"]["login_page_config"]["login_page_strategy_scope"] = ["MANUAL"]
+            
+            ##############################################################################################
+            # FILTER: Only Google IdP
+            treq["landscape_analysis_config"]["idp_config"]["idp_scope"] = ["GOOGLE"]
+            ##############################################################################################
+            
             treq["landscape_analysis_config"]["login_page_config"]["manual_strategy_config"]["login_page_candidates"] = [
                 lpc["login_page_candidate"] for lpc in tres.get("landscape_analysis_result", {}).get("login_page_candidates", [])
             ]
